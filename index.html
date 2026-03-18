@@ -3,154 +3,510 @@
 
 <head>
     <meta charset="UTF-8">
-    <title>Continent Explorer</title>
+    <title>Global Explorer</title>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap"
+        rel="stylesheet">
     <style>
+        :root {
+            --bg: #0d0f14;
+            --surface: #161920;
+            --surface2: #1e2230;
+            --border: #2a2f3d;
+            --accent: #4fffb0;
+            --accent2: #7b6cff;
+            --text: #e8eaf0;
+            --muted: #6b7280;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        /* Full-page flex column, no body scroll — page-content scrolls */
+        html,
         body {
-            font-family: 'Segoe UI', sans-serif;
-            padding: 30px;
-            background-color: #f4f7f9;
+            height: 100%;
+            overflow: hidden;
+            font-family: 'DM Sans', sans-serif;
+            background: var(--bg);
+            color: var(--text);
         }
 
-        .control-panel {
-            margin-bottom: 30px;
-            background: white;
-            padding: 20px;
-            border-radius: 10px;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        /* ══════════════════════════════════
+       ① FILTER NAVBAR — fixed at very top
+    ══════════════════════════════════ */
+        .filters {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 500;
+            display: flex;
+            flex-wrap: wrap;
+            align-items: flex-end;
+            gap: 16px;
+            padding: 14px 40px;
+            background: rgba(14, 16, 25, 0.98);
+            border-bottom: 1px solid var(--border);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            box-shadow: 0 4px 28px rgba(0, 0, 0, 0.6);
         }
 
-        select {
-            padding: 12px;
-            width: 300px;
-            border-radius: 6px;
-            border: 1px solid #cbd5e0;
-            font-size: 16px;
+        .filter-group {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .filter-group label {
+            font-family: 'Syne', sans-serif;
+            font-size: 0.67rem;
+            font-weight: 700;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            color: var(--accent);
+        }
+
+        .filter-group select {
+            background: var(--surface2);
+            color: var(--text);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 9px 32px 9px 13px;
+            font-size: 0.87rem;
+            font-family: 'DM Sans', sans-serif;
+            width: 200px;
             cursor: pointer;
+            outline: none;
+            transition: border-color 0.2s, box-shadow 0.2s;
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' fill='none'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%236b7280' stroke-width='1.5' stroke-linecap='round'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 12px center;
+        }
+
+        .filter-group select:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 2px rgba(79, 255, 176, 0.13);
+        }
+
+        /* ══════════════════════════════════
+       ② SCROLLABLE CONTENT AREA
+       padding-top set by JS = navbar height
+    ══════════════════════════════════ */
+        .page-content {
+            height: 100%;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* ══════════════════════════════════
+       ③ HERO — first thing after navbar
+    ══════════════════════════════════ */
+        .hero {
+            background: linear-gradient(135deg, #0d0f14 0%, #131829 60%, #0d0f14 100%);
+            border-bottom: 1px solid var(--border);
+            padding: 26px 40px 20px;
+            position: relative;
+            overflow: hidden;
+            flex-shrink: 0;
+        }
+
+        .hero::before {
+            content: '';
+            position: absolute;
+            width: 500px;
+            height: 500px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(75, 255, 176, 0.06) 0%, transparent 70%);
+            top: -180px;
+            right: -80px;
+            pointer-events: none;
+        }
+
+        .hero-title {
+            font-family: 'Syne', sans-serif;
+            font-size: 2.1rem;
+            font-weight: 800;
+            letter-spacing: -1px;
+            background: linear-gradient(90deg, var(--accent), var(--accent2));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .hero-sub {
+            color: var(--muted);
+            font-size: 0.87rem;
+            margin-top: 4px;
+        }
+
+        /* ── Stats bar ── */
+        .stats-bar {
+            padding: 11px 40px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-shrink: 0;
+            border-bottom: 1px solid var(--border);
+            background: var(--bg);
+        }
+
+        .badge {
+            background: linear-gradient(135deg, var(--accent2), var(--accent));
+            color: #0d0f14;
+            font-family: 'Syne', sans-serif;
+            font-weight: 700;
+            font-size: 0.8rem;
+            padding: 3px 11px;
+            border-radius: 20px;
+            min-width: 34px;
+            text-align: center;
+        }
+
+        .stats-text {
+            color: var(--muted);
+            font-size: 0.85rem;
+        }
+
+        /* ══════════════════════════════════
+       ④ TABLE
+    ══════════════════════════════════ */
+        .table-wrap {
+            flex: 1;
+            overflow-x: auto;
+            padding: 0 40px 48px;
         }
 
         table {
             width: 100%;
             border-collapse: collapse;
-            background: white;
-            border-radius: 10px;
-            overflow: hidden;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+            font-size: 0.875rem;
+            min-width: 1100px;
         }
 
-        th,
-        td {
-            padding: 15px;
-            text-align: left;
-            border-bottom: 1px solid #edf2f7;
-        }
-
-        th {
-            background-color: #2d3748;
-            color: white;
-            font-weight: 600;
+        /* Sticky thead sticks at top:0 of .page-content scroll container */
+        thead th {
+            background: #0b0d14;
+            color: var(--accent);
+            font-family: 'Syne', sans-serif;
+            font-size: 0.67rem;
+            font-weight: 700;
+            letter-spacing: 1.5px;
             text-transform: uppercase;
-            font-size: 13px;
+            padding: 13px 15px;
+            border-top: 1px solid var(--border);
+            border-bottom: 2px solid var(--border);
+            white-space: nowrap;
+            position: sticky;
+            top: 0;
+            z-index: 100;
         }
 
-        tr:hover {
-            background-color: #f8fafc;
+        tbody tr {
+            transition: background 0.12s;
         }
 
-        .no-data {
+        tbody tr:hover {
+            background: var(--surface2);
+        }
+
+        td {
+            padding: 11px 15px;
+            vertical-align: middle;
+            color: var(--text);
+            border-bottom: 1px solid var(--border);
+        }
+
+        .cell-flag img {
+            width: 42px;
+            height: 28px;
+            object-fit: cover;
+            border-radius: 4px;
+            display: block;
+            box-shadow: 0 1px 6px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(255, 255, 255, 0.07);
+        }
+
+        .pill {
+            display: inline-block;
+            background: var(--surface2);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 2px 9px;
+            font-size: 0.75rem;
+            color: var(--muted);
+            margin: 2px 2px 2px 0;
+            white-space: nowrap;
+        }
+
+        .pill-accent {
+            background: rgba(75, 255, 176, 0.08);
+            border-color: rgba(75, 255, 176, 0.22);
+            color: var(--accent);
+        }
+
+        /* Loading / error */
+        .loading {
+            text-align: center;
+            padding: 60px;
+            color: var(--muted);
+            font-size: 0.95rem;
+        }
+
+        .spinner {
+            display: inline-block;
+            width: 26px;
+            height: 26px;
+            border: 3px solid var(--border);
+            border-top-color: var(--accent);
+            border-radius: 50%;
+            animation: spin 0.7s linear infinite;
+            margin-bottom: 10px;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        .error {
+            color: #ff6b6b;
             text-align: center;
             padding: 40px;
-            color: #718096;
         }
     </style>
 </head>
 
 <body>
 
-    <div class="control-panel">
-        <label for="continentSelect" style="display:block; margin-bottom:10px; font-weight:bold;">Filter by
-            Continent:</label>
-        <select id="continentSelect">
-            <option value="">Loading continents...</option>
-        </select>
-    </div>
+    <!-- ① Filter navbar — fixed at absolute top of viewport -->
+    <nav class="filters" id="filterBar">
+        <div class="filter-group">
+            <label>Continent</label>
+            <select id="selContinent">
+                <option value="">All Continents</option>
+            </select>
+        </div>
+        <div class="filter-group">
+            <label>Region</label>
+            <select id="selRegion">
+                <option value="">All Regions</option>
+            </select>
+        </div>
+        <div class="filter-group">
+            <label>Sub-Region</label>
+            <select id="selSubRegion">
+                <option value="">All Sub-Regions</option>
+            </select>
+        </div>
+    </nav>
 
-    <table id="resultsTable" style="display:none;">
-        <thead>
-            <tr>
-                <th>Common Name</th>
-                <th>Official Name</th>
-                <th>Capital</th>
-                <th>Currencies</th>
-            </tr>
-        </thead>
-        <tbody id="tableBody"></tbody>
-    </table>
+    <!-- ② Scrollable content — padding-top set by JS -->
+    <div class="page-content" id="pageContent">
 
-    <div id="placeholder" class="no-data">Please select a continent to view countries.</div>
+        <!-- Hero title -->
+        <div class="hero">
+            <div class="hero-title">🌍 Global Explorer</div>
+            <div class="hero-sub">Countries, capitals, languages, currencies & more — all in one place</div>
+        </div>
+
+        <!-- Stats -->
+        <div class="stats-bar">
+            <span class="badge" id="badge">—</span>
+            <span class="stats-text" id="statsText">Loading…</span>
+        </div>
+
+        <!-- Table — thead sticks at top:0 inside the scrollable .page-content -->
+        <div class="table-wrap">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Flag</th>
+                        <th>Country</th>
+                        <th>Capital</th>
+                        <th>Continent</th>
+                        <th>Region</th>
+                        <th>Sub-Region</th>
+                        <th>Language(s)</th>
+                        <th>Currency</th>
+                        <th>Religion</th>
+                    </tr>
+                </thead>
+                <tbody id="tableBody">
+                    <tr>
+                        <td colspan="9" class="loading">
+                            <div class="spinner"></div><br>Fetching country data…
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+    </div><!-- end .page-content -->
 
     <script>
-        const continentSelect = document.getElementById('continentSelect');
-        const resultsTable = document.getElementById('resultsTable');
+        /* ── Sync page-content padding-top to fixed navbar height ── */
+        function syncLayout() {
+            const navH = document.getElementById('filterBar').offsetHeight;
+            document.getElementById('pageContent').style.paddingTop = navH + 'px';
+        }
+        new ResizeObserver(syncLayout).observe(document.getElementById('filterBar'));
+        syncLayout();
+
+        /* ── Religion data ── */
+        const RELIGION_MAP = {
+            "Afghanistan": "Islam", "Albania": "Islam", "Algeria": "Islam", "Andorra": "Christianity", "Angola": "Christianity",
+            "Antigua and Barbuda": "Christianity", "Argentina": "Christianity", "Armenia": "Christianity", "Australia": "Christianity",
+            "Austria": "Christianity", "Azerbaijan": "Islam", "Bahamas": "Christianity", "Bahrain": "Islam", "Bangladesh": "Islam",
+            "Barbados": "Christianity", "Belarus": "Christianity", "Belgium": "Christianity", "Belize": "Christianity",
+            "Benin": "Christianity", "Bhutan": "Buddhism", "Bolivia": "Christianity", "Bosnia and Herzegovina": "Islam",
+            "Botswana": "Christianity", "Brazil": "Christianity", "Brunei": "Islam", "Bulgaria": "Christianity",
+            "Burkina Faso": "Islam", "Burundi": "Christianity", "Cabo Verde": "Christianity", "Cambodia": "Buddhism",
+            "Cameroon": "Christianity", "Canada": "Christianity", "Central African Republic": "Christianity", "Chad": "Islam",
+            "Chile": "Christianity", "China": "Irreligion", "Colombia": "Christianity", "Comoros": "Islam",
+            "Congo": "Christianity", "Costa Rica": "Christianity", "Croatia": "Christianity", "Cuba": "Irreligion",
+            "Cyprus": "Christianity", "Czechia": "Irreligion", "Denmark": "Christianity", "Djibouti": "Islam",
+            "Dominica": "Christianity", "Dominican Republic": "Christianity", "Ecuador": "Christianity", "Egypt": "Islam",
+            "El Salvador": "Christianity", "Equatorial Guinea": "Christianity", "Eritrea": "Christianity", "Estonia": "Christianity",
+            "Eswatini": "Christianity", "Ethiopia": "Christianity", "Fiji": "Christianity", "Finland": "Christianity",
+            "France": "Christianity", "Gabon": "Christianity", "Gambia": "Islam", "Georgia": "Christianity", "Germany": "Christianity",
+            "Ghana": "Christianity", "Greece": "Christianity", "Grenada": "Christianity", "Guatemala": "Christianity",
+            "Guinea": "Islam", "Guinea-Bissau": "Islam", "Guyana": "Christianity", "Haiti": "Christianity", "Honduras": "Christianity",
+            "Hungary": "Christianity", "Iceland": "Christianity", "India": "Hinduism", "Indonesia": "Islam", "Iran": "Islam",
+            "Iraq": "Islam", "Ireland": "Christianity", "Israel": "Judaism", "Italy": "Christianity", "Jamaica": "Christianity",
+            "Japan": "Shinto/Buddhism", "Jordan": "Islam", "Kazakhstan": "Islam", "Kenya": "Christianity", "Kiribati": "Christianity",
+            "Kuwait": "Islam", "Kyrgyzstan": "Islam", "Laos": "Buddhism", "Latvia": "Christianity", "Lebanon": "Islam",
+            "Lesotho": "Christianity", "Liberia": "Christianity", "Libya": "Islam", "Liechtenstein": "Christianity",
+            "Lithuania": "Christianity", "Luxembourg": "Christianity", "Madagascar": "Christianity", "Malawi": "Christianity",
+            "Malaysia": "Islam", "Maldives": "Islam", "Mali": "Islam", "Malta": "Christianity", "Marshall Islands": "Christianity",
+            "Mauritania": "Islam", "Mauritius": "Hinduism", "Mexico": "Christianity", "Micronesia": "Christianity",
+            "Moldova": "Christianity", "Monaco": "Christianity", "Mongolia": "Buddhism", "Montenegro": "Christianity",
+            "Morocco": "Islam", "Mozambique": "Christianity", "Myanmar": "Buddhism", "Namibia": "Christianity", "Nauru": "Christianity",
+            "Nepal": "Hinduism", "Netherlands": "Christianity", "New Zealand": "Christianity", "Nicaragua": "Christianity",
+            "Niger": "Islam", "Nigeria": "Islam", "North Korea": "Irreligion", "North Macedonia": "Christianity", "Norway": "Christianity",
+            "Oman": "Islam", "Pakistan": "Islam", "Palau": "Christianity", "Palestine": "Islam", "Panama": "Christianity",
+            "Papua New Guinea": "Christianity", "Paraguay": "Christianity", "Peru": "Christianity", "Philippines": "Christianity",
+            "Poland": "Christianity", "Portugal": "Christianity", "Qatar": "Islam", "Romania": "Christianity", "Russia": "Christianity",
+            "Rwanda": "Christianity", "Saint Kitts and Nevis": "Christianity", "Saint Lucia": "Christianity",
+            "Saint Vincent and the Grenadines": "Christianity", "Samoa": "Christianity", "San Marino": "Christianity",
+            "São Tomé and Príncipe": "Christianity", "Saudi Arabia": "Islam", "Senegal": "Islam", "Serbia": "Christianity",
+            "Seychelles": "Christianity", "Sierra Leone": "Islam", "Singapore": "Buddhism", "Slovakia": "Christianity",
+            "Slovenia": "Christianity", "Solomon Islands": "Christianity", "Somalia": "Islam", "South Africa": "Christianity",
+            "South Korea": "Irreligion", "South Sudan": "Christianity", "Spain": "Christianity", "Sri Lanka": "Buddhism",
+            "Sudan": "Islam", "Suriname": "Hinduism", "Sweden": "Christianity", "Switzerland": "Christianity", "Syria": "Islam",
+            "Taiwan": "Buddhism", "Tajikistan": "Islam", "Tanzania": "Christianity", "Thailand": "Buddhism",
+            "Timor-Leste": "Christianity", "Togo": "Christianity", "Tonga": "Christianity", "Trinidad and Tobago": "Christianity",
+            "Tunisia": "Islam", "Turkey": "Islam", "Turkmenistan": "Islam", "Tuvalu": "Christianity", "Uganda": "Christianity",
+            "Ukraine": "Christianity", "United Arab Emirates": "Islam", "United Kingdom": "Christianity",
+            "United States": "Christianity", "Uruguay": "Christianity", "Uzbekistan": "Islam", "Vanuatu": "Christianity",
+            "Venezuela": "Christianity", "Vietnam": "Buddhism", "Yemen": "Islam", "Zambia": "Christianity", "Zimbabwe": "Christianity"
+        };
+
+        const selContinent = document.getElementById('selContinent');
+        const selRegion = document.getElementById('selRegion');
+        const selSubRegion = document.getElementById('selSubRegion');
         const tableBody = document.getElementById('tableBody');
-        const placeholder = document.getElementById('placeholder');
+        const badge = document.getElementById('badge');
+        const statsText = document.getElementById('statsText');
 
         let allCountries = [];
 
         async function init() {
             try {
-                const res = await fetch('https://restcountries.com/v3.1/all?fields=name,capital,currencies,continents');
+                const res = await fetch('https://restcountries.com/v3.1/all?fields=name,capital,continents,region,subregion,flags,languages,currencies');
+                if (!res.ok) throw new Error('HTTP ' + res.status);
                 allCountries = await res.json();
-
-                const continentSet = new Set();
-                allCountries.forEach(c => {
-                    if (c.continents) c.continents.forEach(cont => continentSet.add(cont));
-                });
-
-                const sortedContinents = Array.from(continentSet).sort();
-
-                continentSelect.innerHTML = '<option value="">-- Choose a Continent --</option>';
-                sortedContinents.forEach(cont => {
-                    const opt = document.createElement('option');
-                    opt.value = cont;
-                    opt.textContent = cont;
-                    continentSelect.appendChild(opt);
-                });
-            } catch (err) {
-                continentSelect.innerHTML = '<option>Error loading data</option>';
+                allCountries.sort((a, b) => a.name.common.localeCompare(b.name.common));
+                populateSelect(selContinent, [...new Set(allCountries.flatMap(c => c.continents))].sort());
+                populateSelect(selRegion, [...new Set(allCountries.map(c => c.region).filter(Boolean))].sort());
+                populateSelect(selSubRegion, [...new Set(allCountries.map(c => c.subregion).filter(Boolean))].sort());
+                renderTable(allCountries);
+            } catch (e) {
+                tableBody.innerHTML = `<tr><td colspan="9" class="error">⚠️ Failed to load: ${e.message}</td></tr>`;
+                statsText.textContent = 'Error loading data.';
             }
         }
 
-        continentSelect.addEventListener('change', (e) => {
-            const selectedContinent = e.target.value;
+        function populateSelect(sel, values) {
+            const cur = sel.value;
+            sel.innerHTML = `<option value="">All ${sel.id.replace('sel', '')}</option>`;
+            values.forEach(v => {
+                const o = document.createElement('option');
+                o.value = o.textContent = v;
+                sel.appendChild(o);
+            });
+            if (values.includes(cur)) sel.value = cur;
+        }
 
-            if (!selectedContinent) {
-                resultsTable.style.display = 'none';
-                placeholder.style.display = 'block';
+        function getLanguages(c) {
+            if (!c.languages) return '—';
+            const langs = Object.values(c.languages);
+            return langs.slice(0, 3).map(l => `<span class="pill">${l}</span>`).join('') +
+                (langs.length > 3 ? `<span class="pill">+${langs.length - 3}</span>` : '');
+        }
+
+        function getCurrencies(c) {
+            if (!c.currencies) return '—';
+            return Object.entries(c.currencies).slice(0, 2).map(([code, cur]) =>
+                `<span class="pill pill-accent">${cur.symbol || ''} ${code}</span>`
+            ).join('');
+        }
+
+        function renderTable(data) {
+            badge.textContent = data.length;
+            statsText.textContent = 'countries found';
+            if (!data.length) {
+                tableBody.innerHTML = `<tr><td colspan="9" style="text-align:center;padding:40px;color:var(--muted)">No countries match these filters.</td></tr>`;
                 return;
             }
+            tableBody.innerHTML = data.map(c => `
+    <tr>
+      <td class="cell-flag"><img src="${c.flags?.png || c.flags?.svg || ''}" alt="${c.name.common}" title="${c.name.common}" loading="lazy" onerror="this.style.display='none'"></td>
+      <td><strong>${c.name.common}</strong></td>
+      <td>${c.capital?.[0] || '—'}</td>
+      <td>${c.continents?.join(', ') || '—'}</td>
+      <td>${c.region || '—'}</td>
+      <td>${c.subregion || '—'}</td>
+      <td>${getLanguages(c)}</td>
+      <td>${getCurrencies(c)}</td>
+      <td><span class="pill">${RELIGION_MAP[c.name.common] || '—'}</span></td>
+    </tr>
+  `).join('');
+        }
 
-            const filtered = allCountries
-                .filter(c => c.continents && c.continents.includes(selectedContinent))
-                .sort((a, b) => a.name.common.localeCompare(b.name.common));
+        function getFiltered() {
+            const cont = selContinent.value;
+            const reg = selRegion.value;
+            const sub = selSubRegion.value;
+            return allCountries.filter(c =>
+                (!cont || c.continents.includes(cont)) &&
+                (!reg || c.region === reg) &&
+                (!sub || c.subregion === sub)
+            );
+        }
 
-            tableBody.innerHTML = filtered.map(country => {
-                const currencyNames = country.currencies
-                    ? Object.values(country.currencies).map(curr => `${curr.name} (${curr.symbol})`).join(', ')
-                    : 'N/A';
+        function onFilterChange(changedSel) {
+            const cont = selContinent.value;
+            const reg = selRegion.value;
+            const filtered = allCountries.filter(c => !cont || c.continents.includes(cont));
+            if (changedSel === selContinent) {
+                populateSelect(selRegion, [...new Set(filtered.map(c => c.region).filter(Boolean))].sort());
+                populateSelect(selSubRegion, [...new Set(filtered.map(c => c.subregion).filter(Boolean))].sort());
+            } else if (changedSel === selRegion) {
+                const f2 = filtered.filter(c => !reg || c.region === reg);
+                populateSelect(selSubRegion, [...new Set(f2.map(c => c.subregion).filter(Boolean))].sort());
+            }
+            renderTable(getFiltered());
+        }
 
-                return `
-                    <tr>
-                        <td><strong>${country.name.common}</strong></td>
-                        <td>${country.name.official}</td>
-                        <td>${country.capital ? country.capital[0] : 'N/A'}</td>
-                        <td>${currencyNames}</td>
-                    </tr>
-                `;
-            }).join('');
-
-            placeholder.style.display = 'none';
-            resultsTable.style.display = 'table';
-        });
+        selContinent.addEventListener('change', () => onFilterChange(selContinent));
+        selRegion.addEventListener('change', () => onFilterChange(selRegion));
+        selSubRegion.addEventListener('change', () => renderTable(getFiltered()));
 
         init();
     </script>
