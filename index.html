@@ -17,6 +17,7 @@
             --accent2: #7b6cff;
             --text: #e8eaf0;
             --muted: #6b7280;
+            --drawer-w: 380px;
         }
 
         * {
@@ -25,7 +26,6 @@
             padding: 0;
         }
 
-        /* Full-page flex column, no body scroll — page-content scrolls */
         html,
         body {
             height: 100%;
@@ -35,9 +35,7 @@
             color: var(--text);
         }
 
-        /* ══════════════════════════════════
-       ① FILTER NAVBAR — fixed at very top
-    ══════════════════════════════════ */
+        /* ══════ FIXED FILTER NAVBAR ══════ */
         .filters {
             position: fixed;
             top: 0;
@@ -52,7 +50,6 @@
             background: rgba(14, 16, 25, 0.98);
             border-bottom: 1px solid var(--border);
             backdrop-filter: blur(16px);
-            -webkit-backdrop-filter: blur(16px);
             box-shadow: 0 4px 28px rgba(0, 0, 0, 0.6);
         }
 
@@ -94,20 +91,20 @@
             box-shadow: 0 0 0 2px rgba(79, 255, 176, 0.13);
         }
 
-        /* ══════════════════════════════════
-       ② SCROLLABLE CONTENT AREA
-       padding-top set by JS = navbar height
-    ══════════════════════════════════ */
+        /* ══════ MAIN LAYOUT: table + drawer side by side ══════ */
         .page-content {
             height: 100%;
             overflow-y: auto;
             display: flex;
             flex-direction: column;
+            transition: padding-right 0.35s cubic-bezier(.4, 0, .2, 1);
         }
 
-        /* ══════════════════════════════════
-       ③ HERO — first thing after navbar
-    ══════════════════════════════════ */
+        .page-content.drawer-open {
+            padding-right: var(--drawer-w);
+        }
+
+        /* ══════ HERO ══════ */
         .hero {
             background: linear-gradient(135deg, #0d0f14 0%, #131829 60%, #0d0f14 100%);
             border-bottom: 1px solid var(--border);
@@ -145,7 +142,21 @@
             margin-top: 4px;
         }
 
-        /* ── Stats bar ── */
+        .hero-hint {
+            margin-top: 8px;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.76rem;
+            color: var(--accent2);
+            opacity: 0.8;
+        }
+
+        .hero-hint svg {
+            flex-shrink: 0;
+        }
+
+        /* ══════ STATS ══════ */
         .stats-bar {
             padding: 11px 40px;
             display: flex;
@@ -173,9 +184,7 @@
             font-size: 0.85rem;
         }
 
-        /* ══════════════════════════════════
-       ④ TABLE
-    ══════════════════════════════════ */
+        /* ══════ TABLE ══════ */
         .table-wrap {
             flex: 1;
             overflow-x: auto;
@@ -189,7 +198,6 @@
             min-width: 1100px;
         }
 
-        /* Sticky thead sticks at top:0 of .page-content scroll container */
         thead th {
             background: #0b0d14;
             color: var(--accent);
@@ -209,10 +217,16 @@
 
         tbody tr {
             transition: background 0.12s;
+            cursor: pointer;
         }
 
         tbody tr:hover {
             background: var(--surface2);
+        }
+
+        tbody tr.active {
+            background: rgba(79, 255, 176, 0.06);
+            border-left: 3px solid var(--accent);
         }
 
         td {
@@ -247,6 +261,189 @@
             background: rgba(75, 255, 176, 0.08);
             border-color: rgba(75, 255, 176, 0.22);
             color: var(--accent);
+        }
+
+        /* ══════ DETAIL DRAWER ══════ */
+        .drawer {
+            position: fixed;
+            top: 0;
+            right: 0;
+            bottom: 0;
+            width: var(--drawer-w);
+            z-index: 400;
+            background: #13151e;
+            border-left: 1px solid var(--border);
+            box-shadow: -8px 0 40px rgba(0, 0, 0, 0.6);
+            display: flex;
+            flex-direction: column;
+            transform: translateX(100%);
+            transition: transform 0.35s cubic-bezier(.4, 0, .2, 1);
+            overflow: hidden;
+        }
+
+        .drawer.open {
+            transform: translateX(0);
+        }
+
+        /* Drawer header with flag background */
+        .drawer-header {
+            position: relative;
+            padding: 28px 24px 20px;
+            border-bottom: 1px solid var(--border);
+            flex-shrink: 0;
+            overflow: hidden;
+            background: var(--surface);
+        }
+
+        .drawer-header::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(135deg, rgba(79, 255, 176, 0.04) 0%, rgba(123, 108, 255, 0.06) 100%);
+        }
+
+        .drawer-close {
+            position: absolute;
+            top: 14px;
+            right: 14px;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            border: 1px solid var(--border);
+            background: var(--surface2);
+            color: var(--muted);
+            font-size: 1rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.15s, color 0.15s;
+            z-index: 1;
+            line-height: 1;
+        }
+
+        .drawer-close:hover {
+            background: var(--border);
+            color: var(--text);
+        }
+
+        .drawer-flag {
+            width: 80px;
+            height: 54px;
+            object-fit: cover;
+            border-radius: 6px;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.08);
+            margin-bottom: 14px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .drawer-country-name {
+            font-family: 'Syne', sans-serif;
+            font-size: 1.5rem;
+            font-weight: 800;
+            color: var(--text);
+            letter-spacing: -0.5px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .drawer-country-official {
+            font-size: 0.78rem;
+            color: var(--muted);
+            margin-top: 3px;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Drawer body — scrollable */
+        .drawer-body {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px 24px 32px;
+            display: flex;
+            flex-direction: column;
+            gap: 0;
+        }
+
+        .drawer-body::-webkit-scrollbar {
+            width: 4px;
+        }
+
+        .drawer-body::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .drawer-body::-webkit-scrollbar-thumb {
+            background: var(--border);
+            border-radius: 4px;
+        }
+
+        /* Each detail row */
+        .detail-row {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+            padding: 14px 0;
+            border-bottom: 1px solid var(--border);
+            animation: slideUp 0.25s ease both;
+        }
+
+        .detail-row:last-child {
+            border-bottom: none;
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .detail-label {
+            font-family: 'Syne', sans-serif;
+            font-size: 0.62rem;
+            font-weight: 700;
+            letter-spacing: 1.8px;
+            text-transform: uppercase;
+            color: var(--accent);
+        }
+
+        .detail-value {
+            font-size: 0.95rem;
+            color: var(--text);
+            line-height: 1.5;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
+            align-items: center;
+        }
+
+        .detail-value .tag {
+            display: inline-block;
+            background: var(--surface2);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 3px 10px;
+            font-size: 0.82rem;
+            color: var(--text);
+        }
+
+        .detail-value .tag-green {
+            background: rgba(79, 255, 176, 0.09);
+            border-color: rgba(79, 255, 176, 0.25);
+            color: var(--accent);
+        }
+
+        .detail-value .tag-purple {
+            background: rgba(123, 108, 255, 0.1);
+            border-color: rgba(123, 108, 255, 0.3);
+            color: #a89bff;
         }
 
         /* Loading / error */
@@ -284,7 +481,7 @@
 
 <body>
 
-    <!-- ① Filter navbar — fixed at absolute top of viewport -->
+    <!-- ① Fixed filter navbar -->
     <nav class="filters" id="filterBar">
         <div class="filter-group">
             <label>Continent</label>
@@ -306,22 +503,27 @@
         </div>
     </nav>
 
-    <!-- ② Scrollable content — padding-top set by JS -->
+    <!-- ② Scrollable page content -->
     <div class="page-content" id="pageContent">
 
-        <!-- Hero title -->
         <div class="hero">
             <div class="hero-title">🌍 Global Explorer</div>
             <div class="hero-sub">Countries, capitals, languages, currencies & more — all in one place</div>
+            <div class="hero-hint">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="10" />
+                    <line x1="12" y1="8" x2="12" y2="12" />
+                    <line x1="12" y1="16" x2="12.01" y2="16" />
+                </svg>
+                Click any country row to see its full details
+            </div>
         </div>
 
-        <!-- Stats -->
         <div class="stats-bar">
             <span class="badge" id="badge">—</span>
             <span class="stats-text" id="statsText">Loading…</span>
         </div>
 
-        <!-- Table — thead sticks at top:0 inside the scrollable .page-content -->
         <div class="table-wrap">
             <table>
                 <thead>
@@ -347,13 +549,25 @@
             </table>
         </div>
 
-    </div><!-- end .page-content -->
+    </div>
+
+    <!-- ③ Detail drawer (slides in from right) -->
+    <aside class="drawer" id="drawer">
+        <div class="drawer-header" id="drawerHeader">
+            <button class="drawer-close" id="drawerClose" title="Close">✕</button>
+            <img class="drawer-flag" id="drawerFlag" src="" alt="">
+            <div class="drawer-country-name" id="drawerName"></div>
+            <div class="drawer-country-official" id="drawerOfficial"></div>
+        </div>
+        <div class="drawer-body" id="drawerBody"></div>
+    </aside>
 
     <script>
-        /* ── Sync page-content padding-top to fixed navbar height ── */
+        /* ── Layout sync ── */
         function syncLayout() {
-            const navH = document.getElementById('filterBar').offsetHeight;
-            document.getElementById('pageContent').style.paddingTop = navH + 'px';
+            const h = document.getElementById('filterBar').offsetHeight;
+            document.getElementById('pageContent').style.paddingTop = h + 'px';
+            document.getElementById('drawer').style.paddingTop = h + 'px';
         }
         new ResizeObserver(syncLayout).observe(document.getElementById('filterBar'));
         syncLayout();
@@ -413,9 +627,75 @@
         const tableBody = document.getElementById('tableBody');
         const badge = document.getElementById('badge');
         const statsText = document.getElementById('statsText');
+        const drawer = document.getElementById('drawer');
+        const pageContent = document.getElementById('pageContent');
 
         let allCountries = [];
+        let activeRow = null;
 
+        /* ── Drawer open/close ── */
+        function openDrawer(c, rowEl) {
+            // Highlight row
+            if (activeRow) activeRow.classList.remove('active');
+            activeRow = rowEl;
+            rowEl.classList.add('active');
+
+            // Header
+            const flagSrc = c.flags?.png || c.flags?.svg || '';
+            document.getElementById('drawerFlag').src = flagSrc;
+            document.getElementById('drawerFlag').alt = c.name.common;
+            document.getElementById('drawerName').textContent = c.name.common;
+            document.getElementById('drawerOfficial').textContent = c.name.official || '';
+
+            // Build detail rows
+            const langs = c.languages ? Object.values(c.languages) : [];
+            const currencies = c.currencies
+                ? Object.entries(c.currencies).map(([code, v]) => `${v.name} (${v.symbol || '—'}) · ${code}`)
+                : [];
+
+            const rows = [
+                { label: '🏛 Capital', value: c.capital?.[0] || '—', type: 'plain' },
+                { label: '🌍 Continent', value: c.continents?.join(', ') || '—', type: 'plain' },
+                { label: '🗺 Region', value: c.region || '—', type: 'plain' },
+                { label: '📍 Sub-Region', value: c.subregion || '—', type: 'plain' },
+                { label: '🗣 Languages', value: langs, type: 'tags' },
+                { label: '💰 Currency', value: currencies, type: 'tags-green' },
+                { label: '🕌 Religion', value: RELIGION_MAP[c.name.common] || '—', type: 'plain' },
+            ];
+
+            document.getElementById('drawerBody').innerHTML = rows.map((r, i) => {
+                let valHtml;
+                if (r.type === 'plain') {
+                    valHtml = `<span>${r.value}</span>`;
+                } else if (r.type === 'tags') {
+                    valHtml = r.value.length
+                        ? r.value.map(v => `<span class="tag tag-purple">${v}</span>`).join('')
+                        : '<span>—</span>';
+                } else {
+                    valHtml = r.value.length
+                        ? r.value.map(v => `<span class="tag tag-green">${v}</span>`).join('')
+                        : '<span>—</span>';
+                }
+                return `
+      <div class="detail-row" style="animation-delay:${i * 40}ms">
+        <div class="detail-label">${r.label}</div>
+        <div class="detail-value">${valHtml}</div>
+      </div>`;
+            }).join('');
+
+            drawer.classList.add('open');
+            pageContent.classList.add('drawer-open');
+        }
+
+        function closeDrawer() {
+            drawer.classList.remove('open');
+            pageContent.classList.remove('drawer-open');
+            if (activeRow) { activeRow.classList.remove('active'); activeRow = null; }
+        }
+
+        document.getElementById('drawerClose').addEventListener('click', closeDrawer);
+
+        /* ── Data ── */
         async function init() {
             try {
                 const res = await fetch('https://restcountries.com/v3.1/all?fields=name,capital,continents,region,subregion,flags,languages,currencies');
@@ -452,8 +732,8 @@
 
         function getCurrencies(c) {
             if (!c.currencies) return '—';
-            return Object.entries(c.currencies).slice(0, 2).map(([code, cur]) =>
-                `<span class="pill pill-accent">${cur.symbol || ''} ${code}</span>`
+            return Object.entries(c.currencies).slice(0, 2).map(([code, v]) =>
+                `<span class="pill pill-accent">${v.symbol || ''} ${code}</span>`
             ).join('');
         }
 
@@ -462,11 +742,12 @@
             statsText.textContent = 'countries found';
             if (!data.length) {
                 tableBody.innerHTML = `<tr><td colspan="9" style="text-align:center;padding:40px;color:var(--muted)">No countries match these filters.</td></tr>`;
+                closeDrawer();
                 return;
             }
             tableBody.innerHTML = data.map(c => `
-    <tr>
-      <td class="cell-flag"><img src="${c.flags?.png || c.flags?.svg || ''}" alt="${c.name.common}" title="${c.name.common}" loading="lazy" onerror="this.style.display='none'"></td>
+    <tr data-name="${c.name.common.replace(/"/g, '&quot;')}">
+      <td class="cell-flag"><img src="${c.flags?.png || c.flags?.svg || ''}" alt="${c.name.common}" loading="lazy" onerror="this.style.display='none'"></td>
       <td><strong>${c.name.common}</strong></td>
       <td>${c.capital?.[0] || '—'}</td>
       <td>${c.continents?.join(', ') || '—'}</td>
@@ -477,12 +758,19 @@
       <td><span class="pill">${RELIGION_MAP[c.name.common] || '—'}</span></td>
     </tr>
   `).join('');
+
+            // Attach click handlers
+            tableBody.querySelectorAll('tr').forEach(row => {
+                row.addEventListener('click', () => {
+                    const name = row.dataset.name;
+                    const country = allCountries.find(c => c.name.common === name);
+                    if (country) openDrawer(country, row);
+                });
+            });
         }
 
         function getFiltered() {
-            const cont = selContinent.value;
-            const reg = selRegion.value;
-            const sub = selSubRegion.value;
+            const cont = selContinent.value, reg = selRegion.value, sub = selSubRegion.value;
             return allCountries.filter(c =>
                 (!cont || c.continents.includes(cont)) &&
                 (!reg || c.region === reg) &&
@@ -491,8 +779,7 @@
         }
 
         function onFilterChange(changedSel) {
-            const cont = selContinent.value;
-            const reg = selRegion.value;
+            const cont = selContinent.value, reg = selRegion.value;
             const filtered = allCountries.filter(c => !cont || c.continents.includes(cont));
             if (changedSel === selContinent) {
                 populateSelect(selRegion, [...new Set(filtered.map(c => c.region).filter(Boolean))].sort());
@@ -501,12 +788,13 @@
                 const f2 = filtered.filter(c => !reg || c.region === reg);
                 populateSelect(selSubRegion, [...new Set(f2.map(c => c.subregion).filter(Boolean))].sort());
             }
+            closeDrawer();
             renderTable(getFiltered());
         }
 
         selContinent.addEventListener('change', () => onFilterChange(selContinent));
         selRegion.addEventListener('change', () => onFilterChange(selRegion));
-        selSubRegion.addEventListener('change', () => renderTable(getFiltered()));
+        selSubRegion.addEventListener('change', () => { closeDrawer(); renderTable(getFiltered()); });
 
         init();
     </script>
