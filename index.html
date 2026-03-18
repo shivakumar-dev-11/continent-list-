@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Continent Explorer</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            padding: 30px;
+            background-color: #f4f7f9;
+        }
+
+        .control-panel {
+            margin-bottom: 30px;
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        select {
+            padding: 12px;
+            width: 300px;
+            border-radius: 6px;
+            border: 1px solid #cbd5e0;
+            font-size: 16px;
+            cursor: pointer;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+        }
+
+        th,
+        td {
+            padding: 15px;
+            text-align: left;
+            border-bottom: 1px solid #edf2f7;
+        }
+
+        th {
+            background-color: #2d3748;
+            color: white;
+            font-weight: 600;
+            text-transform: uppercase;
+            font-size: 13px;
+        }
+
+        tr:hover {
+            background-color: #f8fafc;
+        }
+
+        .no-data {
+            text-align: center;
+            padding: 40px;
+            color: #718096;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="control-panel">
+        <label for="continentSelect" style="display:block; margin-bottom:10px; font-weight:bold;">Filter by
+            Continent:</label>
+        <select id="continentSelect">
+            <option value="">Loading continents...</option>
+        </select>
+    </div>
+
+    <table id="resultsTable" style="display:none;">
+        <thead>
+            <tr>
+                <th>Common Name</th>
+                <th>Official Name</th>
+                <th>Capital</th>
+                <th>Currencies</th>
+            </tr>
+        </thead>
+        <tbody id="tableBody"></tbody>
+    </table>
+
+    <div id="placeholder" class="no-data">Please select a continent to view countries.</div>
+
+    <script>
+        const continentSelect = document.getElementById('continentSelect');
+        const resultsTable = document.getElementById('resultsTable');
+        const tableBody = document.getElementById('tableBody');
+        const placeholder = document.getElementById('placeholder');
+
+        let allCountries = [];
+
+        async function init() {
+            try {
+                const res = await fetch('https://restcountries.com/v3.1/all?fields=name,capital,currencies,continents');
+                allCountries = await res.json();
+
+                const continentSet = new Set();
+                allCountries.forEach(c => {
+                    if (c.continents) c.continents.forEach(cont => continentSet.add(cont));
+                });
+
+                const sortedContinents = Array.from(continentSet).sort();
+
+                continentSelect.innerHTML = '<option value="">-- Choose a Continent --</option>';
+                sortedContinents.forEach(cont => {
+                    const opt = document.createElement('option');
+                    opt.value = cont;
+                    opt.textContent = cont;
+                    continentSelect.appendChild(opt);
+                });
+            } catch (err) {
+                continentSelect.innerHTML = '<option>Error loading data</option>';
+            }
+        }
+
+        continentSelect.addEventListener('change', (e) => {
+            const selectedContinent = e.target.value;
+
+            if (!selectedContinent) {
+                resultsTable.style.display = 'none';
+                placeholder.style.display = 'block';
+                return;
+            }
+
+            const filtered = allCountries
+                .filter(c => c.continents && c.continents.includes(selectedContinent))
+                .sort((a, b) => a.name.common.localeCompare(b.name.common));
+
+            tableBody.innerHTML = filtered.map(country => {
+                const currencyNames = country.currencies
+                    ? Object.values(country.currencies).map(curr => `${curr.name} (${curr.symbol})`).join(', ')
+                    : 'N/A';
+
+                return `
+                    <tr>
+                        <td><strong>${country.name.common}</strong></td>
+                        <td>${country.name.official}</td>
+                        <td>${country.capital ? country.capital[0] : 'N/A'}</td>
+                        <td>${currencyNames}</td>
+                    </tr>
+                `;
+            }).join('');
+
+            placeholder.style.display = 'none';
+            resultsTable.style.display = 'table';
+        });
+
+        init();
+    </script>
+</body>
+
+</html>
